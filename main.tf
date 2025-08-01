@@ -1,9 +1,8 @@
-# ✅ Set up AWS Provider
+
 provider "aws" {
   region = "us-east-1" # Change if needed
 }
 
-# ✅ Get latest Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -14,7 +13,7 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# ✅ EC2 Instance 1
+
 resource "aws_instance" "instance1" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
@@ -24,7 +23,6 @@ resource "aws_instance" "instance1" {
   }
 }
 
-# ✅ EC2 Instance 2
 resource "aws_instance" "instance2" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro"
@@ -34,7 +32,6 @@ resource "aws_instance" "instance2" {
   }
 }
 
-# ✅ IAM Role for Lambda Execution
 resource "aws_iam_role" "lambda_exec_role" {
   name = "lambda-ec2-toggle-role"
 
@@ -50,7 +47,6 @@ resource "aws_iam_role" "lambda_exec_role" {
   })
 }
 
-# ✅ IAM Policy for EC2 and CloudWatch Access
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "ec2-start-stop"
   role = aws_iam_role.lambda_exec_role.id
@@ -76,7 +72,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
-# ✅ Lambda Function to Toggle EC2
 resource "aws_lambda_function" "ec2_toggle" {
   filename         = "lambda_function_payload.zip"
   function_name    = "toggleEC2Instances"
@@ -97,20 +92,17 @@ resource "aws_lambda_function" "ec2_toggle" {
   depends_on = [aws_iam_role_policy.lambda_policy]
 }
 
-# ✅ EventBridge Rule to Trigger Lambda Every Minute
 resource "aws_cloudwatch_event_rule" "every_minute" {
   name                = "run-ec2-toggle-every-minute"
   schedule_expression = "rate(1 minute)"
 }
 
-# ✅ Attach Lambda to Event Rule
 resource "aws_cloudwatch_event_target" "lambda_target" {
   rule      = aws_cloudwatch_event_rule.every_minute.name
   target_id = "ec2LambdaTarget"
   arn       = aws_lambda_function.ec2_toggle.arn
 }
 
-# ✅ Grant Lambda Permission to Be Triggered by EventBridge
 resource "aws_lambda_permission" "allow_cloudwatch" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
